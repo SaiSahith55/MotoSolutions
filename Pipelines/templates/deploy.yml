@@ -1,0 +1,44 @@
+steps:
+- task: replacetokens@3
+  inputs:
+    targetFiles: '**/*.json'
+    encoding: 'auto'
+    writeBOM: true
+    actionOnMissing: 'warn'
+    keepToken: false
+    tokenPrefix: '__'
+    tokenSuffix: '__'
+    useLegacyPattern: false
+    enableTransforms: false
+    enableTelemetry: true
+- task: AzureResourceManagerTemplateDeployment@3
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: 'Sahith Reddy(70864b8d-09fa-4ae9-a89c-edc80ff6819c)'
+    subscriptionId: '70864b8d-09fa-4ae9-a89c-edc80ff6819c'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(ResourceGroupName)'
+    location: '$(location)'
+    templateLocation: 'Linked artifact'
+    csmFile: '*/**/appservice.json'
+    csmParametersFile: '*/**/appservice-parameter.json'
+    deploymentMode: 'Incremental'
+
+- task: AzureRmWebAppDeployment@4
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'Sahith Reddy(70864b8d-09fa-4ae9-a89c-edc80ff6819c)'
+    appType: 'webAppLinux'
+    WebAppName: '$(webappname)'
+    deployToSlotOrASE: true
+    ResourceGroupName: '$(ResourceGroupName)'
+    SlotName: 'staging'
+    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+
+- task: AzureAppServiceManage@0
+  inputs:
+    azureSubscription: 'Sahith Reddy(70864b8d-09fa-4ae9-a89c-edc80ff6819c)'
+    Action: 'Swap Slots'
+    WebAppName: '$(webappname)'
+    ResourceGroupName: '$(ResourceGroupName)'
+    SourceSlot: 'staging'

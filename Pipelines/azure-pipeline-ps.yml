@@ -1,0 +1,122 @@
+trigger:
+- master
+
+parameters:
+- name: BuildConfiguration
+  values:
+  - release
+  - debug
+- name: BuildPlatform
+  values:
+  - any cpu
+- name: system.debug
+  values:
+  - false
+  - true
+
+stages:
+- stage: BuildSolution
+  displayName: Build Solution
+  condition: always()
+  jobs:
+  - job: BuildSolution
+    pool: 
+      vmImage: ubuntu-16.04
+    steps:
+    - template: templates/build.yml
+
+- stage: DeployToDev
+  displayName: Deploy To Dev
+  jobs:
+  - job: Deploy
+    pool: 
+      vmImage: ubuntu-16.04
+    variables:
+    - group: Dev
+    steps:
+      - task: replacetokens@3
+        inputs:
+          targetFiles: '**/*.json'
+          encoding: 'auto'
+          writeBOM: true
+          actionOnMissing: 'warn'
+          keepToken: false
+          tokenPrefix: '__'
+          tokenSuffix: '__'
+          useLegacyPattern: false
+          enableTransforms: false
+          enableTelemetry: true
+
+      - task: AzurePowerShell@5
+        inputs:
+          ScriptType: 'FilePath'
+          ScriptPath: './Deploy-Scripts/CreateDeployWebApp.ps1'
+          ScriptArguments: '-webappname $(webappname) -resourcegroupname $(resourcegroupname) -location $(location) -env $(env) -department $(department)'
+          FailOnStandardError: true
+          preferredAzurePowerShellVersion: '3.1.0'
+          pwsh: true
+
+- stage: DeployToStaging
+  displayName: Deploy To Staging
+  jobs:
+  - job: Deploy
+    pool: 
+      vmImage: ubuntu-16.04
+    variables:
+    - group: Staging
+    steps:
+      - task: replacetokens@3
+        inputs:
+          targetFiles: '**/*.json'
+          encoding: 'auto'
+          writeBOM: true
+          actionOnMissing: 'warn'
+          keepToken: false
+          tokenPrefix: '__'
+          tokenSuffix: '__'
+          useLegacyPattern: false
+          enableTransforms: false
+          enableTelemetry: true
+
+      - task: AzurePowerShell@5
+        inputs:
+          ScriptType: 'FilePath'
+          ScriptPath: './Deploy-Scripts/CreateDeployWebApp.ps1'
+          ScriptArguments: '-webappname $(webappname) -resourcegroupname $(resourcegroupname) -location $(location) -env $(env) -department $(department)'
+          FailOnStandardError: true
+          preferredAzurePowerShellVersion: '3.1.0'
+          pwsh: true
+
+
+- stage: DeployToProduction
+  displayName: Deploy To Production
+  jobs:
+  - job: Deploy
+    pool: 
+      vmImage: ubuntu-16.04
+    variables:
+    - group: Production
+    steps:
+    - task: replacetokens@3
+      inputs:
+        targetFiles: '**/*.json'
+        encoding: 'auto'
+        writeBOM: true
+        actionOnMissing: 'warn'
+        keepToken: false
+        tokenPrefix: '__'
+        tokenSuffix: '__'
+        useLegacyPattern: false
+        enableTransforms: false
+        enableTelemetry: true
+    - task: AzurePowerShell@5
+      inputs:
+        ScriptType: 'FilePath'
+        ScriptPath: './Deploy-Scripts/CreateDeployWebApp.ps1'
+        ScriptArguments: '-webappname $(webappname) -resourcegroupname $(resourcegroupname) -location $(location) -env $(env) -department $(department)'
+        FailOnStandardError: true
+        preferredAzurePowerShellVersion: '3.1.0'
+        pwsh: true
+
+
+

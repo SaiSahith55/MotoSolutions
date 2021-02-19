@@ -1,0 +1,146 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "app_service_name": {
+        "type": "String"
+      },
+      "service_plan_id": {
+        "type": "String"
+      },
+      "new_deployment_slot_name": {
+        "type": "String"
+      },  
+      "virtualdir_paths": {
+        "type": "object",
+        "defaultValue": {
+        "default_virtualdirectory": [
+              {
+              "virtualPath":"/",
+              "physicalPath":"site\\wwwroot",
+              "preloadEnabled":true
+              }
+          ]
+        }
+      }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Web/sites/slots",
+        "apiVersion": "2018-11-01",
+        "name": "[concat(parameters('app_service_name'), '/', parameters('new_deployment_slot_name'))]",
+        "location": "East US",
+        "kind": "app",
+        "identity": {
+          "type": "SystemAssigned"
+        },
+        "properties": {
+          "enabled": true,
+          "siteConfig": {
+            "appSettings": [
+              {
+                "name": "WEBSITE_SWAP_WARMUP_PING_STATUSES",
+                "value": "200"
+              },
+              {
+                "name": "WEBSITE_OVERRIDE_PRESERVE_DEFAULT_STICKY_SLOT_SETTINGS",
+                "value": "false"
+              },
+              {
+                "name":"WEBSITE_ADD_SITENAME_BINDINGS_IN_APPHOST_CONFIG",
+                "value":"1"
+              },
+              {
+                "name": "WEBSITE_TIME_ZONE",
+                "value": "Eastern Standard Time"              
+              }
+            ]
+          },
+          "hostNameSslStates": [
+            {
+              "name": "[concat(parameters('app_service_name'), '-',parameters('new_deployment_slot_name'), '.azurewebsites.net')]",
+              "sslState": "Disabled",
+              "hostType": "Standard"
+            },
+            {
+              "name": "[concat(parameters('app_service_name'), '-', parameters('new_deployment_slot_name'),'.scm.azurewebsites.net')]",
+              "sslState": "Disabled",
+              "hostType": "Repository"
+            }
+          ],
+          "serverFarmId": "[parameters('service_plan_id')]",
+          "reserved": false,
+          "isXenon": false,
+          "hyperV": false,
+          "scmSiteAlsoStopped": false,
+          "clientAffinityEnabled": false,
+          "clientCertEnabled": false,
+          "hostNamesDisabled": false,
+          "containerSize": 0,
+          "dailyMemoryTimeQuota": 0,
+          "httpsOnly": true,
+          "redundancyMode": "None"
+        }
+      },
+      {
+        "type": "Microsoft.Web/sites/slots/config",
+        "apiVersion": "2018-11-01",
+        "name": "[concat(parameters('app_service_name'), '/', parameters('new_deployment_slot_name'), '/web')]",
+        "location": "East US",
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/sites/slots', parameters('app_service_name'), parameters('new_deployment_slot_name'))]"
+        ],
+        "properties": {
+          "numberOfWorkers": 1,
+          "defaultDocuments": [
+            "Default.htm",
+            "Default.html",
+            "index.htm",
+            "index.html",
+            "iisstart.htm",
+            "default.aspx",
+            "hostingstart.html"
+          ],
+          "netFrameworkVersion": "v4.0",
+          "phpVersion": "5.6",
+          "requestTracingEnabled": false,
+          "remoteDebuggingEnabled": true,
+          "remoteDebuggingVersion": "VS2019",
+          "httpLoggingEnabled": false,
+          "logsDirectorySizeLimit": 35,
+          "detailedErrorLoggingEnabled": false,
+          "publishingUsername": "",
+          "scmType": "None",
+          "use32BitWorkerProcess": true,
+          "webSocketsEnabled": false,
+          "alwaysOn": true,
+          "managedPipelineMode": "Integrated",
+          "virtualApplications":"[parameters('virtualdir_paths').default_virtualdirectory]",
+          "loadBalancing": "LeastRequests",
+          "experiments": {
+            "rampUpRules": []
+          },
+          "autoHealEnabled": true,
+          "localMySqlEnabled": false,
+          "scmIpSecurityRestrictionsUseMain": false,
+          "http20Enabled": false,
+          "minTlsVersion": "1.2",
+          "ftpsState": "FtpsOnly",
+          "reservedInstanceCount": 0
+        }
+      },
+      {
+        "type": "Microsoft.Web/sites/slots/hostNameBindings",
+        "apiVersion": "2018-11-01",
+        "name": "[concat(parameters('app_service_name'), '/', parameters('new_deployment_slot_name'), '/', parameters('app_service_name'), '-', parameters('new_deployment_slot_name'), '.azurewebsites.net')]",
+        "location": "East US",
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/sites/slots', parameters('app_service_name'), parameters('new_deployment_slot_name'))]"
+        ],
+        "properties": {
+          "siteName": "[concat(parameters('app_service_name'), '-', parameters('new_deployment_slot_name'))]",
+          "hostNameType": "Verified"
+        }
+      }
+    ]
+  }

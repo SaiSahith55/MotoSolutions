@@ -1,0 +1,15 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"app_service_name": {
+			"value": "__webappname__"
+		},
+		"service_plan_id": {
+			"value": "__webappserviceplanname__"
+		},
+		"new_deployment_slot_name": {
+			"value": "staging"
+		}
+	}
+}

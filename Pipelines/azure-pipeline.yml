@@ -1,0 +1,62 @@
+trigger:
+- master
+
+parameters:
+- name: BuildConfiguration
+  values:
+  - release
+  - debug
+- name: BuildPlatform
+  values:
+  - any cpu
+- name: system.debug
+  values:
+  - false
+  - true
+
+stages:
+- stage: BuildSolution
+  displayName: Build Solution
+  condition: always()
+  jobs:
+  - job: BuildSolution
+    pool: 
+      vmImage: ubuntu-16.04
+    steps:
+    - template: templates/build.yml
+
+- stage: DeploytoDev
+  displayName: Deploy to Dev
+  condition: always()
+  jobs:
+  - job: DeployDev
+    pool: 
+      vmImage: ubuntu-16.04
+    variables:
+    - group: Dev
+    steps:
+    - template: templates/deploy.yml
+
+- stage: DeploytoStaging
+  displayName: Deploy to Staging
+  condition: always()
+  jobs:
+  - job: DeployStaging
+    pool: 
+      vmImage: ubuntu-16.04
+    variables:
+    - group: Dev
+    steps:
+    - template: templates/deploy.yml
+
+- stage: DeploytoProduction
+  displayName: Deploy to Production
+  condition: always()
+  jobs:
+  - job: DeployProduction
+    pool: 
+      vmImage: ubuntu-16.04
+    variables:
+    - group: Dev
+    steps:
+    - template: templates/deploy.yml
